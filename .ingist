@@ -1,0 +1,3 @@
+ALLOWED_FILES=.js,.jsx,.css,.php,.json
+EXCLUDE_DIRECTORIES=config,.git,.idea,factories,ssr,node_modules,vendor,storage,cache,tests,public
+EXCLUDE_FILES=
