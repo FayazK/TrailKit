@@ -1,34 +1,58 @@
-import { Link } from '@inertiajs/react';
-import { Card } from 'antd';
-import ApplicationLogo from '@/Components/ApplicationLogo';
+import { Layout, Typography } from 'antd'
+import ApplicationLogo from '@/Components/ApplicationLogo'
+import { Link } from '@inertiajs/react'
+import '@css/auth.css'
 
-export default function AuthLayout({ children, title }) {
+const { Content } = Layout
+const { Title } = Typography
+
+const AuthLayout = ({ children, title }) => {
   return (
-    <div className="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gradient-to-b from-gray-50 to-gray-100">
-      <div className="mb-8">
-        <Link href="/">
-          <ApplicationLogo className="w-20 h-20 fill-current text-gray-500" />
-        </Link>
-      </div>
+    <Layout className="bg-transparent">
+      <Content>
+        <div className="flex flex-col items-center justify-center">
+          {/* Main Card Container */}
+          <div className="w-full max-w-md px-6">
+            {/* Glossy Card */}
+            <div className="relative rounded-xl overflow-hidden shadow-2xl">
+              {/* Card Content */}
+              <div className="relative px-8 pt-8 pb-10 backdrop-blur-sm">
+                {/* Logo Section */}
+                <div className="mb-6 text-center">
+                  <Link href="/">
+                    <ApplicationLogo
+                      className="mx-auto h-16 w-16 fill-current text-gray-600 hover:text-gray-800 transition-colors duration-200"/>
+                  </Link>
+                </div>
 
-      <Card
-        className="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden rounded-lg"
-        bordered={false}
-      >
-        {title && (
-          <div className="mb-6 text-center">
-            <h2 className="text-2xl font-semibold text-gray-800">
-              {title}
-            </h2>
+                {/* Title */}
+                {title && (
+                  <Title level={4} className="text-center mb-6">
+                    {title}
+                  </Title>
+                )}
+
+                {/* Form Content */}
+                <div className="relative z-10">
+                  {children}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Links */}
+            <div className="mt-6 text-center text-sm text-gray-500">
+              <Link
+                href="/"
+                className="hover:text-gray-700 transition-colors duration-200"
+              >
+                Back to Home
+              </Link>
+            </div>
           </div>
-        )}
-
-        {children}
-      </Card>
-
-      <footer className="mt-8 text-center text-sm text-gray-500">
-        <p>&copy; {new Date().getFullYear()} Your Company. All rights reserved.</p>
-      </footer>
-    </div>
-  );
+        </div>
+      </Content>
+    </Layout>
+  )
 }
+
+export default AuthLayout
