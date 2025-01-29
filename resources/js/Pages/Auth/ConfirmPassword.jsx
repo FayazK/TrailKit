@@ -1,55 +1,95 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { useState } from 'react'
+import { Form, Input, Button, Alert } from 'antd'
+import { IconLock, IconShieldLock } from '@tabler/icons-react'
+import { router } from '@inertiajs/react'
+import AuthLayout from '@/Layouts/AuthLayout'
 
-export default function ConfirmPassword() {
-    const { data, setData, post, processing, errors, reset } = useForm({
-        password: '',
-    });
+const ConfirmPassword = () => {
+  const [form] = Form.useForm()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-    const submit = (e) => {
-        e.preventDefault();
+  const onFinish = (values) => {
+    setLoading(true)
+    setError(null)
 
-        post(route('password.confirm'), {
-            onFinish: () => reset('password'),
-        });
-    };
+    router.post(route('password.confirm'), {
+      password: values.password
+    }, {
+      onError: (errors) => {
+        setError(errors.password)
+        form.setFields([{
+          name: 'password',
+          errors: [errors.password]
+        }])
+      },
+      onFinish: () => {
+        setLoading(false)
+      }
+    })
+  }
 
-    return (
-        <GuestLayout>
-            <Head title="Confirm Password" />
+  return (
+    <AuthLayout title="Confirm Password">
+      <div>
+        {/* Security Icon */}
+        <div className="text-center mb-6">
+          <IconShieldLock size={48} className="text-blue-500" />
+        </div>
 
-            <div className="mb-4 text-sm text-gray-600">
-                This is a secure area of the application. Please confirm your
-                password before continuing.
-            </div>
+        {/* Error Message */}
+        {error && (
+          <Alert
+            message={error}
+            type="error"
+            showIcon
+            className="mb-4"
+          />
+        )}
 
-            <form onSubmit={submit}>
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
+        {/* Description */}
+        <div className="mb-4 text-sm text-gray-600">
+          This is a secure area of the application. Please confirm your password before continuing.
+        </div>
 
-                    <TextInput
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="mt-1 block w-full"
-                        isFocused={true}
-                        onChange={(e) => setData('password', e.target.value)}
-                    />
+        {/* Form */}
+        <Form
+          form={form}
+          name="confirm-password"
+          onFinish={onFinish}
+          layout="vertical"
+          requiredMark={false}
+        >
+          <Form.Item
+            name="password"
+            rules={[
+              { required: true, message: 'Please input your password!' },
+              { min: 8, message: 'Password must be at least 8 characters!' }
+            ]}
+          >
+            <Input.Password
+              prefix={<IconLock size={16} className="text-gray-400"/>}
+              placeholder="Password"
+              size="large"
+            />
+          </Form.Item>
 
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div className="mt-4 flex items-center justify-end">
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Confirm
-                    </PrimaryButton>
-                </div>
-            </form>
-        </GuestLayout>
-    );
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              size="large"
+              loading={loading}
+              disabled={loading}
+              className="w-full"
+            >
+              Confirm Password
+            </Button>
+          </Form.Item>
+        </Form>
+      </div>
+    </AuthLayout>
+  )
 }
+
+export default ConfirmPassword

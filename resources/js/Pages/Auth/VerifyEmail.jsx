@@ -1,50 +1,74 @@
-import PrimaryButton from '@/Components/PrimaryButton';
-import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { useState } from 'react'
+import { Button, Alert, Space } from 'antd'
+import { IconMail } from '@tabler/icons-react'
+import { router } from '@inertiajs/react'
+import AuthLayout from '@/Layouts/AuthLayout'
 
-export default function VerifyEmail({ status }) {
-    const { post, processing } = useForm({});
+const VerifyEmail = ({ status }) => {
+  const [loading, setLoading] = useState(false)
 
-    const submit = (e) => {
-        e.preventDefault();
+  const resendEmail = () => {
+    setLoading(true)
+    router.post(route('verification.send'), {}, {
+      onFinish: () => setLoading(false),
+    })
+  }
 
-        post(route('verification.send'));
-    };
+  const logout = () => {
+    router.post(route('logout'))
+  }
 
-    return (
-        <GuestLayout>
-            <Head title="Email Verification" />
+  return (
+    <AuthLayout title="Verify Email Address">
+      <div>
+        {/* Verification Link Sent Status */}
+        {status === 'verification-link-sent' && (
+          <Alert
+            message="A new verification link has been sent to the email address you provided during registration."
+            type="success"
+            showIcon
+            className="mb-4"
+          />
+        )}
 
-            <div className="mb-4 text-sm text-gray-600">
-                Thanks for signing up! Before getting started, could you verify
-                your email address by clicking on the link we just emailed to
-                you? If you didn't receive the email, we will gladly send you
-                another.
-            </div>
+        {/* Main Content Card */}
+        <div className="text-center">
+          <IconMail size={48} className="mx-auto mb-4 text-blue-500" />
 
-            {status === 'verification-link-sent' && (
-                <div className="mb-4 text-sm font-medium text-green-600">
-                    A new verification link has been sent to the email address
-                    you provided during registration.
-                </div>
-            )}
+          <div className="text-sm text-gray-600 mb-6">
+            Thanks for signing up! Before getting started, could you verify your email address by clicking on the link we just emailed to you? If you didn't receive the email, we will gladly send you another.
+          </div>
 
-            <form onSubmit={submit}>
-                <div className="mt-4 flex items-center justify-between">
-                    <PrimaryButton disabled={processing}>
-                        Resend Verification Email
-                    </PrimaryButton>
+          <Space direction="vertical" size="middle" className="w-full">
+            <Button
+              type="primary"
+              size="large"
+              onClick={resendEmail}
+              loading={loading}
+              icon={<IconMail size={18} />}
+              className="w-full"
+            >
+              Resend Verification Email
+            </Button>
 
-                    <Link
-                        href={route('logout')}
-                        method="post"
-                        as="button"
-                        className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                        Log Out
-                    </Link>
-                </div>
-            </form>
-        </GuestLayout>
-    );
+            <Button
+              type="default"
+              size="large"
+              onClick={logout}
+              className="w-full"
+            >
+              Log Out
+            </Button>
+          </Space>
+        </div>
+
+        {/* Help Text */}
+        <div className="mt-6 text-center text-xs text-gray-500">
+          Make sure to check your spam folder if you don't see the email in your inbox.
+        </div>
+      </div>
+    </AuthLayout>
+  )
 }
+
+export default VerifyEmail

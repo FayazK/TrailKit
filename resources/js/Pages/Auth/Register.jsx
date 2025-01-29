@@ -1,120 +1,139 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
-import GuestLayout from '@/Layouts/GuestLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { useState } from 'react'
+import { Form, Input, Button, Alert } from 'antd'
+import { IconUser, IconLock, IconMail } from '@tabler/icons-react'
+import { Link, router } from '@inertiajs/react'
+import AuthLayout from '@/Layouts/AuthLayout'
 
-export default function Register() {
-    const { data, setData, post, processing, errors, reset } = useForm({
-        name: '',
-        email: '',
-        password: '',
-        password_confirmation: '',
-    });
+const Register = () => {
+  const [form] = Form.useForm()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-    const submit = (e) => {
-        e.preventDefault();
+  const onFinish = (values) => {
+    setLoading(true)
+    setError(null)
 
-        post(route('register'), {
-            onFinish: () => reset('password', 'password_confirmation'),
-        });
-    };
+    router.post(route('register'), {
+      name: values.name,
+      email: values.email,
+      password: values.password,
+      password_confirmation: values.password_confirmation
+    }, {
+      onError: (errors) => {
+        setError(Object.values(errors)[0])
+      },
+      onFinish: () => setLoading(false),
+    })
+  }
 
-    return (
-        <GuestLayout>
-            <Head title="Register" />
+  return (
+    <AuthLayout title="Create a new account">
+      <div>
+        {error && (
+          <Alert
+            message={error}
+            type="error"
+            className="mb-4"
+          />
+        )}
 
-            <form onSubmit={submit}>
-                <div>
-                    <InputLabel htmlFor="name" value="Name" />
+        <Form
+          form={form}
+          name="register"
+          onFinish={onFinish}
+          layout="vertical"
+          requiredMark={false}
+        >
+          <Form.Item
+            name="name"
+            rules={[
+              { required: true, message: 'Please input your name!' },
+              { min: 2, message: 'Name must be at least 2 characters!' }
+            ]}
+          >
+            <Input
+              prefix={<IconUser size={16} className="text-gray-400"/>}
+              placeholder="Full Name"
+              size="large"
+            />
+          </Form.Item>
 
-                    <TextInput
-                        id="name"
-                        name="name"
-                        value={data.name}
-                        className="mt-1 block w-full"
-                        autoComplete="name"
-                        isFocused={true}
-                        onChange={(e) => setData('name', e.target.value)}
-                        required
-                    />
+          <Form.Item
+            name="email"
+            rules={[
+              { required: true, message: 'Please input your email!' },
+              { type: 'email', message: 'Please enter a valid email address!' }
+            ]}
+          >
+            <Input
+              prefix={<IconMail size={16} className="text-gray-400"/>}
+              placeholder="Email Address"
+              size="large"
+            />
+          </Form.Item>
 
-                    <InputError message={errors.name} className="mt-2" />
-                </div>
+          <Form.Item
+            name="password"
+            rules={[
+              { required: true, message: 'Please input your password!' },
+              { min: 8, message: 'Password must be at least 8 characters!' }
+            ]}
+          >
+            <Input.Password
+              prefix={<IconLock size={16} className="text-gray-400"/>}
+              placeholder="Password"
+              size="large"
+            />
+          </Form.Item>
 
-                <div className="mt-4">
-                    <InputLabel htmlFor="email" value="Email" />
+          <Form.Item
+            name="password_confirmation"
+            dependencies={['password']}
+            rules={[
+              { required: true, message: 'Please confirm your password!' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('password') === value) {
+                    return Promise.resolve()
+                  }
+                  return Promise.reject(new Error('The two passwords do not match!'))
+                },
+              }),
+            ]}
+          >
+            <Input.Password
+              prefix={<IconLock size={16} className="text-gray-400"/>}
+              placeholder="Confirm Password"
+              size="large"
+            />
+          </Form.Item>
 
-                    <TextInput
-                        id="email"
-                        type="email"
-                        name="email"
-                        value={data.email}
-                        className="mt-1 block w-full"
-                        autoComplete="username"
-                        onChange={(e) => setData('email', e.target.value)}
-                        required
-                    />
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              size="large"
+              loading={loading}
+              disabled={loading}
+              className="w-full"
+            >
+              Register
+            </Button>
+          </Form.Item>
+        </Form>
 
-                    <InputError message={errors.email} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
-
-                    <TextInput
-                        id="password"
-                        type="password"
-                        name="password"
-                        value={data.password}
-                        className="mt-1 block w-full"
-                        autoComplete="new-password"
-                        onChange={(e) => setData('password', e.target.value)}
-                        required
-                    />
-
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel
-                        htmlFor="password_confirmation"
-                        value="Confirm Password"
-                    />
-
-                    <TextInput
-                        id="password_confirmation"
-                        type="password"
-                        name="password_confirmation"
-                        value={data.password_confirmation}
-                        className="mt-1 block w-full"
-                        autoComplete="new-password"
-                        onChange={(e) =>
-                            setData('password_confirmation', e.target.value)
-                        }
-                        required
-                    />
-
-                    <InputError
-                        message={errors.password_confirmation}
-                        className="mt-2"
-                    />
-                </div>
-
-                <div className="mt-4 flex items-center justify-end">
-                    <Link
-                        href={route('login')}
-                        className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                        Already registered?
-                    </Link>
-
-                    <PrimaryButton className="ms-4" disabled={processing}>
-                        Register
-                    </PrimaryButton>
-                </div>
-            </form>
-        </GuestLayout>
-    );
+        <div className="mt-6 text-center text-sm text-gray-600">
+          Already have an account?{' '}
+          <Link
+            href={route('login')}
+            className="text-blue-600 hover:text-blue-800"
+          >
+            Sign in here
+          </Link>
+        </div>
+      </div>
+    </AuthLayout>
+  )
 }
+
+export default Register
