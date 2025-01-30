@@ -1,37 +1,24 @@
 import { Card, Typography, Space, Form, Input, Button, Modal, Alert } from 'antd'
-import { Head, usePage, Link, router } from '@inertiajs/react'
-import { useState } from 'react'
-import {
-  IconUser,
-  IconMail,
-  IconLock,
-  IconAlertTriangle,
-} from '@tabler/icons-react'
+import { Head, usePage, Link } from '@inertiajs/react'
+import { IconUser, IconMail, IconLock, IconAlertTriangle } from '@tabler/icons-react'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout'
+import { useInertiaFormSubmit } from '@/Hooks/UseInertiaFormSubmit.jsx'
+import { useConfirmDialog } from '@/Hooks/UseConfirmDialog.jsx'
 
 const { Title, Text } = Typography
 
-export default function Edit ({ mustVerifyEmail, status }) {
+export default function Edit ({ mustVerifyEmail }) {
   const user = usePage().props.auth.user
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false)
-  const [errors, setErrors] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const deleteDialog = useConfirmDialog()
 
   const ProfileForm = () => {
     const [form] = Form.useForm()
+    const { submit, loading, errors } = useInertiaFormSubmit({
+      successMessage: 'Profile updated successfully',
+    })
 
     const onFinish = (values) => {
-      setLoading(true)
-      router.patch(route('profile.update'), {
-        name: values.name,
-        email: values.email,
-      }, {
-        preserveScroll: true,
-        onError: (error) => {
-          setErrors(error.response.data.errors)
-        },
-        onFinish: () => setLoading(false),
-      })
+      submit(route('profile.update'), values, 'patch')
     }
 
     return (
@@ -50,27 +37,24 @@ export default function Edit ({ mustVerifyEmail, status }) {
           <Form.Item
             label="Name"
             name="name"
+            validateStatus={errors.name && 'error'}
+            help={errors.name}
             rules={[{ required: true, message: 'Please input your name!' }]}
-
           >
-            <Input
-              prefix={<IconUser className="text-gray-400" size={16}/>}
-              onChange={e => setData('name', e.target.value)}
-            />
+            <Input prefix={<IconUser className="text-gray-400" size={16}/>}/>
           </Form.Item>
 
           <Form.Item
             label="Email"
             name="email"
+            validateStatus={errors.email && 'error'}
+            help={errors.email}
             rules={[
               { required: true, message: 'Please input your email!' },
               { type: 'email', message: 'Please enter a valid email!' },
             ]}
           >
-            <Input
-              prefix={<IconMail className="text-gray-400" size={16}/>}
-              onChange={e => setData('email', e.target.value)}
-            />
+            <Input prefix={<IconMail className="text-gray-400" size={16}/>}/>
           </Form.Item>
 
           {mustVerifyEmail && user.email_verified_at === null && (
@@ -104,20 +88,15 @@ export default function Edit ({ mustVerifyEmail, status }) {
     )
   }
 
-  // Update Password Form
   const PasswordForm = () => {
     const [form] = Form.useForm()
-    const { data, setData, errors, put, processing, reset } = useForm({
-      current_password: '',
-      password: '',
-      password_confirmation: '',
+    const { submit, loading, errors } = useInertiaFormSubmit({
+      successMessage: 'Password updated successfully',
+      onSuccess: () => form.resetFields(),
     })
 
-    const onFinish = () => {
-      put(route('password.update'), {
-        preserveScroll: true,
-        onSuccess: () => form.resetFields(),
-      })
+    const onFinish = (values) => {
+      submit(route('password.update'), values, 'put')
     }
 
     return (
@@ -127,11 +106,7 @@ export default function Edit ({ mustVerifyEmail, status }) {
           Ensure your account is using a long, random password to stay secure.
         </Text>
 
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={onFinish}
-        >
+        <Form form={form} layout="vertical" onFinish={onFinish}>
           <Form.Item
             label="Current Password"
             name="current_password"
@@ -139,10 +114,7 @@ export default function Edit ({ mustVerifyEmail, status }) {
             help={errors.current_password}
             rules={[{ required: true, message: 'Please input your current password!' }]}
           >
-            <Input.Password
-              prefix={<IconLock className="text-gray-400" size={16}/>}
-              onChange={e => setData('current_password', e.target.value)}
-            />
+            <Input.Password prefix={<IconLock className="text-gray-400" size={16}/>}/>
           </Form.Item>
 
           <Form.Item
@@ -155,10 +127,7 @@ export default function Edit ({ mustVerifyEmail, status }) {
               { min: 8, message: 'Password must be at least 8 characters!' },
             ]}
           >
-            <Input.Password
-              prefix={<IconLock className="text-gray-400" size={16}/>}
-              onChange={e => setData('password', e.target.value)}
-            />
+            <Input.Password prefix={<IconLock className="text-gray-400" size={16}/>}/>
           </Form.Item>
 
           <Form.Item
@@ -179,14 +148,11 @@ export default function Edit ({ mustVerifyEmail, status }) {
               }),
             ]}
           >
-            <Input.Password
-              prefix={<IconLock className="text-gray-400" size={16}/>}
-              onChange={e => setData('password_confirmation', e.target.value)}
-            />
+            <Input.Password prefix={<IconLock className="text-gray-400" size={16}/>}/>
           </Form.Item>
 
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={processing}>
+            <Button type="primary" htmlType="submit" loading={loading}>
               Save
             </Button>
           </Form.Item>
@@ -195,24 +161,16 @@ export default function Edit ({ mustVerifyEmail, status }) {
     )
   }
 
-  // Delete Account Form
   const DeleteAccount = () => {
     const [form] = Form.useForm()
-    const { data, setData, delete: destroy, processing, reset, errors } = useForm({
-      password: '',
+    const { submit, loading, errors } = useInertiaFormSubmit({
+      successMessage: 'Account deleted successfully',
+      errorMessage: 'Failed to delete account',
+      onSuccess: deleteDialog.hide,
     })
 
-    const onFinish = () => {
-      destroy(route('profile.destroy'), {
-        preserveScroll: true,
-        onSuccess: () => setDeleteModalVisible(false),
-        onError: () => form.setFields([
-          {
-            name: 'password',
-            errors: [errors.password],
-          },
-        ]),
-      })
+    const onFinish = (values) => {
+      submit(route('profile.destroy'), values, 'delete')
     }
 
     return (
@@ -223,7 +181,7 @@ export default function Edit ({ mustVerifyEmail, status }) {
           Before deleting your account, please download any data or information that you wish to retain.
         </Text>
 
-        <Button danger onClick={() => setDeleteModalVisible(true)}>
+        <Button danger onClick={deleteDialog.show}>
           Delete Account
         </Button>
 
@@ -234,9 +192,9 @@ export default function Edit ({ mustVerifyEmail, status }) {
               <span>Delete Account</span>
             </Space>
           }
-          open={deleteModalVisible}
+          open={deleteDialog.visible}
           footer={null}
-          onCancel={() => setDeleteModalVisible(false)}
+          onCancel={deleteDialog.hide}
         >
           <Form form={form} layout="vertical" onFinish={onFinish}>
             <Text className="block mb-4">
@@ -254,15 +212,14 @@ export default function Edit ({ mustVerifyEmail, status }) {
               <Input.Password
                 prefix={<IconLock className="text-gray-400" size={16}/>}
                 placeholder="Password"
-                onChange={e => setData('password', e.target.value)}
               />
             </Form.Item>
 
             <div className="flex justify-end gap-4">
-              <Button onClick={() => setDeleteModalVisible(false)}>
+              <Button onClick={deleteDialog.hide}>
                 Cancel
               </Button>
-              <Button danger type="primary" htmlType="submit" loading={processing}>
+              <Button danger type="primary" htmlType="submit" loading={loading}>
                 Delete Account
               </Button>
             </div>
